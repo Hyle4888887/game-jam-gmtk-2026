@@ -2,6 +2,9 @@
 
 Game jam GAMEMAKER'S Toolkit on itch.io : 22 - 26 July 2026
 
+We use Godot 4.7.1 
+
 Sources: 
-- Sound : https://lasonotheque.org/
-- Music : https://freetouse.com/music
+- Godot : https://godotengine.org/download/windows/ 
+- Sound : https://lasonotheque.org/ 
+- Music : https://freetouse.com/music 
