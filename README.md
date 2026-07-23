@@ -1,4 +1,4 @@
-*Game jame done by Mpoirier, Mbores & Bozil from 42 Nice*
+*Game jame done by Mpoirier, Mbores, Abonnard & Bozil from 42 Nice*
 
 Game jam GAMEMAKER'S Toolkit on itch.io : 22 - 26 July 2026
 
