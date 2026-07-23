@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://d0test0day001"]
+
+[ext_resource type="Script" path="res://sim/test_day.gd" id="1"]
+
+[node name="TestDay" type="Node"]
+script = ExtResource("1")
