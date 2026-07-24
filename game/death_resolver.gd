@@ -25,7 +25,7 @@ static func resolve(prisoners: Array, quest: Quest, stats: StatsTracker, rng_ser
 			victims.append(p)
 			causes[p] = "table_depleted"
 	else:
-		var max_sentence: int = alive[0].sentence_years
+		var max_sentence: float = alive[0].sentence_years
 		var max_candidates: Array = [alive[0]]
 		for i in range(1, alive.size()):
 			var p = alive[i]

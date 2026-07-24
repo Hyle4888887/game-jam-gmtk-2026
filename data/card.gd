@@ -33,16 +33,39 @@ static func rank_label(rank: int) -> String:
 	return str(rank)
 
 
+## One of these three is used as the default face-down texture (see
+## CardView) - Blue is the neutral pick; Death and Green are also in the art
+## pack if a different back ever suits a specific moment.
+const DEFAULT_BACK_TEXTURE := "res://asset/Cards/Back/BackCardBlue.png"
+
+const FACE_EXTENSIONS := [".png", ".jpg"]
+
+
 func _to_string() -> String:
 	return "%s of %s" % [rank_label(rank), SUIT_FOLDER[suit]]
 
 
-## Best-effort mapping to the jam's art asset filenames. NOTE: the current
-## art pass under res://asset/Cards is incomplete (most suits only have a
-## handful of ranks, and Heart's "2" file is misspelled "2Hearth.png") so this
-## path is not guaranteed to point at an existing file yet. Safe to call now
-## since nothing renders it until the UI milestone.
+## Maps to the jam's art asset filenames, trying both extensions in use
+## (some ranks are .png, some are .jpg). NOTE: the art pass is still in
+## progress as of 2026-07-24 - Spade and Clover currently have NO face art at
+## all, and Heart/Diamond are each missing their Ace (Heart is also missing
+## its 2). Returns "" when no face art exists yet for this card; callers
+## (CardView) should fall back to DEFAULT_BACK_TEXTURE rather than crash, so
+## rendering keeps working as the art pack fills in.
 func texture_path() -> String:
 	var folder: String = SUIT_FOLDER[suit]
 	var prefix: String = rank_label(rank)
-	return "res://asset/Cards/%s/%s%s.png" % [folder, prefix, folder]
+	var base := "res://asset/Cards/%s/%s%s" % [folder, prefix, folder]
+	for ext in FACE_EXTENSIONS:
+		var path: String = base + ext
+		# FileAccess.file_exists checks the actual res:// file, unlike
+		# ResourceLoader.exists() which can return a stale true from
+		# .godot/imported/'s cached import DB after a source file is deleted
+		# but the editor hasn't been reopened to invalidate that cache.
+		if FileAccess.file_exists(path):
+			return path
+	return ""
+
+
+func has_face_art() -> bool:
+	return texture_path() != ""

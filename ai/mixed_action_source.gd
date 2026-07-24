@@ -16,10 +16,12 @@ func _init(p_player_source, p_ai_source) -> void:
 	ai_source = p_ai_source
 
 
-func decide(prisoner, legal_actions: Array, to_call: int, min_raise: int, context: Dictionary = {}) -> Dictionary:
+func decide(prisoner, legal_actions: Array, to_call: float, min_raise: float, context: Dictionary = {}) -> Dictionary:
+	# Must await both branches: player_source may be a HumanActionSource,
+	# which is itself a coroutine (awaits hud.action_chosen).
 	if prisoner.is_player:
-		return player_source.decide(prisoner, legal_actions, to_call, min_raise, context)
-	return ai_source.decide(prisoner, legal_actions, to_call, min_raise, context)
+		return await player_source.decide(prisoner, legal_actions, to_call, min_raise, context)
+	return await ai_source.decide(prisoner, legal_actions, to_call, min_raise, context)
 
 
 func observe_action(prisoner_id: int, action: Dictionary) -> void:

@@ -48,13 +48,13 @@ func _ready() -> void:
 		var blinds := config.blinds_for_day(day)
 
 		for h in range(config.hands_per_day):
-			var log := PokerEngine.play_hand(table.seats, blinds, rng, source, table.dealer_index)
+			var log := await PokerEngine.play_hand(table.seats, blinds, rng, source, table.dealer_index)
 			stats.record_hand(log, table.seats)
 			table.rotate_dealer()
 
 		var quest := QuestManager.draw_daily_quest(config.quest_pool, rng)
 		var before_alive: Array = table.alive_prisoners()
-		var max_sentence_before := 0
+		var max_sentence_before := 0.0
 		for p in before_alive:
 			if p.sentence_years > max_sentence_before:
 				max_sentence_before = p.sentence_years

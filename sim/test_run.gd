@@ -32,7 +32,7 @@ func _ready() -> void:
 	for s in seeds:
 		var config := RunConfig.new()
 		config.seed = s
-		var result: Dictionary = GameManager.start_run(config)
+		var result: Dictionary = await GameManager.start_run(config)
 
 		_check(result.day_reached >= 0 and result.day_reached <= config.x_days - 1, "seed %d: day_reached within [0, x_days-1]" % s)
 
@@ -54,10 +54,10 @@ func _ready() -> void:
 	# Reproducibility: same seed must produce the same outcome.
 	var config_a := RunConfig.new()
 	config_a.seed = 999
-	var result_a: Dictionary = GameManager.start_run(config_a)
+	var result_a: Dictionary = await GameManager.start_run(config_a)
 	var config_b := RunConfig.new()
 	config_b.seed = 999
-	var result_b: Dictionary = GameManager.start_run(config_b)
+	var result_b: Dictionary = await GameManager.start_run(config_b)
 	_check(
 		result_a.win == result_b.win and result_a.day_reached == result_b.day_reached and result_a.final_sentence == result_b.final_sentence,
 		"same seed produces the same run outcome (reproducibility)"

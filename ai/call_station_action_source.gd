@@ -6,7 +6,7 @@ extends RefCounted
 ## "Calling Station" AIProfile preset later (M4).
 
 
-func decide(_prisoner, legal_actions: Array, _to_call: int, _min_raise: int, _context: Dictionary = {}) -> Dictionary:
+func decide(_prisoner, legal_actions: Array, _to_call: float, _min_raise: float, _context: Dictionary = {}) -> Dictionary:
 	if BettingRound.Action.CHECK in legal_actions:
 		return {"type": BettingRound.Action.CHECK}
 	return {"type": BettingRound.Action.CALL}

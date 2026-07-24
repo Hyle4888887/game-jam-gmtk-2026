@@ -30,9 +30,9 @@ func reset_day(prisoners: Array) -> void:
 ## `all_prisoners` is the full seat list that took part in this hand
 ## (folded and showdown alike).
 func record_hand(log: PokerEngine.HandResultLog, all_prisoners: Array) -> void:
-	var pot := 0
+	var pot := 0.0
 	for p in all_prisoners:
-		pot += int(log.contributions.get(p, 0))
+		pot += float(log.contributions.get(p, 0))
 
 	var winner_set := {}
 	for w in log.winners:
@@ -40,13 +40,13 @@ func record_hand(log: PokerEngine.HandResultLog, all_prisoners: Array) -> void:
 
 	for p in all_prisoners:
 		var stats: Dictionary = day_stats[p.id]
-		var contrib: int = int(log.contributions.get(p, 0))
+		var contrib: float = float(log.contributions.get(p, 0))
 		stats["richest_gambler"] += contrib
 
 		if p.folded:
 			stats["most_folds"] += 1
 
-		var delta: int = int(log.sentence_deltas.get(p, 0))
+		var delta: float = float(log.sentence_deltas.get(p, 0))
 		if delta < 0:
 			stats["most_years_shed"] += -delta
 
@@ -62,8 +62,8 @@ func record_hand(log: PokerEngine.HandResultLog, all_prisoners: Array) -> void:
 					stats["most_of_a_suit"] = suit_count
 
 
-func metric(prisoner_id: int, key: String) -> int:
-	return int(day_stats.get(prisoner_id, {}).get(key, 0))
+func metric(prisoner_id: int, key: String) -> float:
+	return float(day_stats.get(prisoner_id, {}).get(key, 0))
 
 
 static func _max_suit_count(cards: Array) -> int:

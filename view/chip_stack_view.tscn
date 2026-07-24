@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dy5kc00d6qe4k"]
+
+[ext_resource type="Script" path="res://view/chip_stack_view.gd" id="1"]
+
+[node name="ChipStackView" type="Control"]
+script = ExtResource("1")

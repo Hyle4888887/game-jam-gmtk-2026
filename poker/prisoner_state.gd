@@ -5,20 +5,20 @@ var id: int
 var display_name: String
 var is_player: bool = false
 var seat: int = -1
-var sentence_years: int = 0
+var sentence_years: float = 0.0
 var is_alive: bool = true
 var ai_profile: AIProfile = null
 
 ## Per-hand state, reset by reset_for_hand() at the start of every hand.
 var hole_cards: Array[Card] = []
-var contribution: int = 0
+var contribution: float = 0.0
 var folded: bool = false
 
 ## Per-day stats, reset by StatsTracker at the start of every day (M5).
 var day_stats: Dictionary = {}
 
 
-func _init(p_id: int, p_name: String, p_sentence: int, p_is_player: bool = false) -> void:
+func _init(p_id: int, p_name: String, p_sentence: float, p_is_player: bool = false) -> void:
 	id = p_id
 	display_name = p_name
 	sentence_years = p_sentence
@@ -40,4 +40,4 @@ func deal_hole(first: Card, second: Card) -> void:
 
 
 func _to_string() -> String:
-	return "%s(#%d, %dy)" % [display_name, id, sentence_years]
+	return "%s(#%d, %sy)" % [display_name, id, sentence_years]

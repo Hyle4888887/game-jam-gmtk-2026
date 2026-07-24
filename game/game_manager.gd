@@ -21,7 +21,7 @@ signal community_revealed(cards: Array)
 signal betting_round_started(street: String)
 signal action_requested(prisoner_id: int, legal_actions: Array)
 signal action_taken(prisoner_id: int, action: Dictionary)
-signal sentence_changed(prisoner_id: int, old_value: int, new_value: int)
+signal sentence_changed(prisoner_id: int, old_value: float, new_value: float)
 signal prisoner_died(prisoner_id: int, cause: String)
 
 var player: PrisonerState = null
@@ -33,9 +33,12 @@ var config: RunConfig = null
 ## DAY_RESOLVE -> next day or RUN_END. See graphify/Design - Rules.md §1 for
 ## the win/lose conditions and graphify/Build Plan - Milestones.md M6.
 ##
-## `action_source` services every seat (player included) since there is no
-## UI/human input yet; a human-playable seat is stretch goal S4 in the build
-## plan and would swap this per-seat instead of table-wide.
+## `action_source` services every seat; pass a MixedActionSource wrapping a
+## HumanActionSource for the player seat once the UI is driving it (see
+## view/human_action_source.gd), otherwise every seat falls back to the
+## AI-vs-AI proxy used by the M7 balance harness. This is a coroutine (awaits
+## PokerEngine.play_hand, which awaits decide() calls) so a human-driven seat
+## can genuinely wait on a button press; callers must `await` this function.
 ## Returns {"win": bool, "reason": String, "day_reached": int,
 ## "final_sentence": int}.
 func start_run(run_config: RunConfig, action_source = null, player_name: String = "Player") -> Dictionary:
@@ -77,7 +80,7 @@ func start_run(run_config: RunConfig, action_source = null, player_name: String 
 
 		for h in range(config.hands_per_day):
 			hand_started.emit(table.dealer_index)
-			var log := PokerEngine.play_hand(table.seats, blinds, RNGService, action_source, table.dealer_index)
+			var log := await PokerEngine.play_hand(table.seats, blinds, RNGService, action_source, table.dealer_index)
 			stats.record_hand(log, table.seats)
 			table.rotate_dealer()
 

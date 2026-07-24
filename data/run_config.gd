@@ -12,11 +12,30 @@ extends Resource
 @export var deaths_per_day: int = 2
 @export var hands_per_day: int = 15
 
-@export var ante: int = 4
-@export var small_blind: int = 5
-@export var big_blind: int = 10
-@export var blind_scale_every_days: int = 2
-@export var blind_scale_factor: float = 1.5
+## Blinds/ante are years (float, not int) specifically so day 1 can open at
+## a genuinely tiny fraction of a year - 30 seconds / 1 minute - per real
+## playtesting feedback that even 1/2 years felt like a steep opening bet.
+## sentence_years/contribution had to become float throughout the engine to
+## carry values this small without rounding/truncating to 0 every hand (that
+## was the actual cause of "raising doesn't change my years": int(round(...))
+## in PokerEngine/StatsTracker was flooring sub-1-year deltas away). Re-verify
+## with the M7 balance harness if this changes again - see loss_penalty_factor
+## below for the last time this mattered.
+@export var ante: float = 0.0
+@export var small_blind: float = 30.0 / TimeUnits.SECONDS_PER_YEAR
+@export var big_blind: float = 60.0 / TimeUnits.SECONDS_PER_YEAR
+## Escalates once PER DAY (not every 2 days) at 10x per step - a 1.5x/2-day
+## curve made sense when day 1 opened at 1/2 years, but starting from a
+## 30sec/1min opening blind needs a MUCH steeper ramp to ever become
+## meaningful against a 142-year sentence within a 7-day run. 10x/day for 6
+## steps (day 0 -> day 6) takes the big blind from 1 minute through roughly
+## an hour, a day, a month, and lands at ~1.9 years by day 7 - conveniently
+## climbing through almost exactly the same 6 tiers (sec/min/hr/day/mo/yr)
+## the chip art and TimeUnits already use, so the escalation itself reads as
+## "today's stakes are a new denomination of chip." Re-verify with the M7
+## balance harness - this changes the difficulty ramp substantially.
+@export var blind_scale_every_days: int = 1
+@export var blind_scale_factor: float = 10.0
 
 ## Bet-to-lose is deliberately not zero-sum (graphify/Design - Rules.md §3):
 ## every hand, the winner erases their FULL contribution but every other
@@ -48,8 +67,8 @@ func blinds_for_day(day_index: int) -> Dictionary:
 	var steps := int(floor(float(day_index) / float(blind_scale_every_days)))
 	var mult := pow(blind_scale_factor, steps)
 	return {
-		"ante": int(round(ante * mult)),
-		"small_blind": int(round(small_blind * mult)),
-		"big_blind": int(round(big_blind * mult)),
+		"ante": ante * mult,
+		"small_blind": small_blind * mult,
+		"big_blind": big_blind * mult,
 		"loss_penalty_factor": loss_penalty_factor,
 	}

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://drb36whu38pr7"]
+
+[ext_resource type="Script" path="res://sim/test_chip_stack_view.gd" id="1"]
+
+[node name="TestChipStackView" type="Node"]
+script = ExtResource("1")

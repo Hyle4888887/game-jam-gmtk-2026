@@ -10,7 +10,7 @@ extends RefCounted
 const DEFAULT_PROFILE_TIGHTNESS := 0.5
 
 
-func decide(prisoner, legal_actions: Array, to_call: int, min_raise: int, context: Dictionary = {}) -> Dictionary:
+func decide(prisoner, legal_actions: Array, to_call: float, min_raise: float, context: Dictionary = {}) -> Dictionary:
 	var profile: AIProfile = prisoner.ai_profile
 	if profile == null:
 		profile = AIProfile.shark()
@@ -39,9 +39,9 @@ func decide(prisoner, legal_actions: Array, to_call: int, min_raise: int, contex
 		# both of those escalate with every re-raise in the same street, and
 		# pot-based sizing would compound into a runaway feedback loop since
 		# sentence_years has no finite "stack" to cap it (see betting_round.gd).
-		var big_blind: int = context.get("big_blind", min_raise)
+		var big_blind: float = context.get("big_blind", min_raise)
 		var size_factor: float = 0.5 + profile.aggression + profile.risk * 0.5
-		var raise_amount: int = max(min_raise, int(round(big_blind * size_factor)))
+		var raise_amount: float = max(min_raise, big_blind * size_factor)
 		return {"type": BettingRound.Action.RAISE, "amount": raise_amount}
 
 	if BettingRound.Action.CHECK in legal_actions:

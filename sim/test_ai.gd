@@ -27,7 +27,7 @@ class CountingActionSource:
 	var fold_counts: Dictionary = {}
 	var raise_counts: Dictionary = {}
 
-	func decide(prisoner, legal_actions: Array, to_call: int, min_raise: int, context: Dictionary = {}) -> Dictionary:
+	func decide(prisoner, legal_actions: Array, to_call: float, min_raise: float, context: Dictionary = {}) -> Dictionary:
 		var action: Dictionary = inner.decide(prisoner, legal_actions, to_call, min_raise, context)
 		var name: String = prisoner.ai_profile.display_name
 		decide_counts[name] = int(decide_counts.get(name, 0)) + 1
@@ -77,7 +77,7 @@ func _ready() -> void:
 		if h % 20 == 0:
 			for p in prisoners:
 				p.sentence_years = 100
-		PokerEngine.play_hand(prisoners, blinds, rng, source, h % 7)
+		await PokerEngine.play_hand(prisoners, blinds, rng, source, h % 7)
 		hands_played += 1
 
 	_check(hands_played == 200, "200 hands completed without hanging or crashing")

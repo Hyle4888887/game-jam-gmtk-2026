@@ -15,7 +15,10 @@ class HandResultLog:
 
 ## Plays one hand of Hold'em for `active_prisoners` (already alive/seated,
 ## in table order). `dealer_index` is an index into active_prisoners.
-## `action_source` must implement decide(...) per BettingRound.
+## `action_source` must implement decide(...) per BettingRound. This is a
+## coroutine (awaits BettingRound.run_street, which itself awaits decide())
+## so a human-driven seat can genuinely wait on input; callers must `await`
+## this function.
 static func play_hand(
 	active_prisoners: Array,
 	blinds: Dictionary,
@@ -30,9 +33,9 @@ static func play_hand(
 	deck.shuffle(rng_service)
 
 	var n := active_prisoners.size()
-	var ante: int = blinds.get("ante", 0)
-	var small_blind: int = blinds.get("small_blind", 0)
-	var big_blind: int = blinds.get("big_blind", 0)
+	var ante: float = blinds.get("ante", 0)
+	var small_blind: float = blinds.get("small_blind", 0)
+	var big_blind: float = blinds.get("big_blind", 0)
 
 	for p in active_prisoners:
 		p.contribution += ante
@@ -52,7 +55,7 @@ static func play_hand(
 		p.deal_hole(deck.draw(), deck.draw())
 
 	var preflop_order := _order_from(active_prisoners, (bb_index + 1) % n)
-	BettingRound.run_street(preflop_order, street_bets, big_blind, big_blind, action_source, [], "preflop")
+	await BettingRound.run_street(preflop_order, street_bets, big_blind, big_blind, action_source, [], "preflop")
 
 	var community: Array[Card] = []
 	var postflop_order := _order_from(active_prisoners, sb_index)
@@ -62,17 +65,20 @@ static func play_hand(
 		community.append(deck.draw())
 		community.append(deck.draw())
 		community.append(deck.draw())
-		BettingRound.run_street(postflop_order, {}, 0, big_blind, action_source, community, "flop")
+		GameManager.community_revealed.emit(community.duplicate())
+		await BettingRound.run_street(postflop_order, {}, 0, big_blind, action_source, community, "flop")
 
 	if BettingRound.count_active(active_prisoners) > 1:
 		deck.burn()
 		community.append(deck.draw())
-		BettingRound.run_street(postflop_order, {}, 0, big_blind, action_source, community, "turn")
+		GameManager.community_revealed.emit(community.duplicate())
+		await BettingRound.run_street(postflop_order, {}, 0, big_blind, action_source, community, "turn")
 
 	if BettingRound.count_active(active_prisoners) > 1:
 		deck.burn()
 		community.append(deck.draw())
-		BettingRound.run_street(postflop_order, {}, 0, big_blind, action_source, community, "river")
+		GameManager.community_revealed.emit(community.duplicate())
+		await BettingRound.run_street(postflop_order, {}, 0, big_blind, action_source, community, "river")
 
 	var log := HandResultLog.new()
 	log.community = community
@@ -120,8 +126,8 @@ static func play_hand(
 	var loss_penalty_factor: float = blinds.get("loss_penalty_factor", 1.0)
 
 	for p in active_prisoners:
-		var delta: int = -p.contribution if winner_set.has(p) else int(round(p.contribution * loss_penalty_factor))
-		var old_sentence: int = p.sentence_years
+		var delta: float = -p.contribution if winner_set.has(p) else p.contribution * loss_penalty_factor
+		var old_sentence: float = p.sentence_years
 		p.sentence_years += delta
 		log.sentence_deltas[p] = delta
 		if delta != 0:

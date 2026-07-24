@@ -22,7 +22,7 @@ func _ready() -> void:
 		prisoners.append(PrisonerState.new(i, "Prisoner %d" % i, sentence, i == 0))
 
 	var action_source := CallStationActionSource.new()
-	var log := PokerEngine.play_hand(prisoners, blinds, rng, action_source, 0)
+	var log := await PokerEngine.play_hand(prisoners, blinds, rng, action_source, 0)
 
 	print("Community: %s" % [log.community])
 	print("Contributions:")

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://w3dtxj5p40r1"]
+
+[ext_resource type="Script" path="res://sim/test_pause.gd" id="1"]
+
+[node name="TestPause" type="Node"]
+script = ExtResource("1")

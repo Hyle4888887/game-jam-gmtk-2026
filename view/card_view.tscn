@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://cardview0001"]
+
+[ext_resource type="Script" path="res://view/card_view.gd" id="1"]
+
+[node name="CardView" type="TextureRect"]
+custom_minimum_size = Vector2(50, 72)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+script = ExtResource("1")

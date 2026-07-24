@@ -37,7 +37,7 @@ func _ready() -> void:
 		var config := RunConfig.new()
 		config.seed = i
 
-		var result: Dictionary = GameManager.start_run(config)
+		var result: Dictionary = await GameManager.start_run(config)
 
 		day_reached_sum += int(result.day_reached)
 		final_sentence_sum += int(result.final_sentence)

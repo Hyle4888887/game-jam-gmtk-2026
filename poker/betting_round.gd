@@ -8,7 +8,7 @@ enum Action { FOLD, CHECK, CALL, RAISE }
 const MAX_RAISES_PER_STREET := 6
 
 
-static func legal_actions(to_call: int, raises_remaining: bool = true) -> Array:
+static func legal_actions(to_call: float, raises_remaining: bool = true) -> Array:
 	if to_call <= 0:
 		return [Action.CHECK, Action.RAISE] if raises_remaining else [Action.CHECK]
 	return [Action.FOLD, Action.CALL, Action.RAISE] if raises_remaining else [Action.FOLD, Action.CALL]
@@ -22,7 +22,7 @@ static func legal_actions(to_call: int, raises_remaining: bool = true) -> Array:
 ## `community` and `street_name` are read-only context for the action source
 ## (e.g. AIController needs the revealed community cards to judge strength).
 ## `action_source` must implement decide(prisoner, legal_actions, to_call,
-## min_raise, context) -> {"type": Action, "amount": int (only for RAISE)},
+## min_raise, context) -> {"type": Action, "amount": float (only for RAISE)},
 ## where context is {"community": Array[Card], "pot": int, "active_count":
 ## int, "street": String, "big_blind": int, "opponent_ids": Array[int]}.
 ## `big_blind` is the day's fixed blind level (== starting_min_raise), given
@@ -36,11 +36,17 @@ static func legal_actions(to_call: int, raises_remaining: bool = true) -> Array:
 ## it's called after every decided action at this table (including its own),
 ## so a stateful action source can build up opponent reads without needing a
 ## signal connection with its own lifecycle to manage.
+##
+## decide() is called with `await`, so a human-driven action source can
+## genuinely suspend (e.g. `await hud.action_chosen`) while an AI one just
+## returns immediately - both work through the same call site. This makes
+## run_street itself (and everything that calls it) a coroutine; callers
+## must `await` it.
 static func run_street(
 	active_players: Array,
 	street_bets: Dictionary,
-	starting_bet: int,
-	starting_min_raise: int,
+	starting_bet: float,
+	starting_min_raise: float,
 	action_source,
 	community: Array = [],
 	street_name: String = ""
@@ -64,10 +70,10 @@ static func run_street(
 		if player.folded:
 			continue
 
-		var already: int = street_bets.get(player, 0)
-		var to_call: int = current_bet - already
+		var already: float = street_bets.get(player, 0)
+		var to_call: float = current_bet - already
 		var legal := legal_actions(to_call, raise_count < MAX_RAISES_PER_STREET)
-		var pot := 0
+		var pot := 0.0
 		for pl in active_players:
 			pot += pl.contribution
 		var opponent_ids: Array = []
@@ -82,9 +88,11 @@ static func run_street(
 			"big_blind": big_blind,
 			"opponent_ids": opponent_ids,
 		}
-		var action: Dictionary = action_source.decide(player, legal, to_call, min_raise, context)
+		GameManager.action_requested.emit(player.id, legal)
+		var action: Dictionary = await action_source.decide(player, legal, to_call, min_raise, context)
 		var action_type: int = action["type"]
 		assert(action_type in legal, "action_source returned an action not in the legal set")
+		GameManager.action_taken.emit(player.id, action)
 		if action_source.has_method("observe_action"):
 			action_source.observe_action(player.id, action)
 
@@ -97,7 +105,7 @@ static func run_street(
 				street_bets[player] = already + to_call
 				player.contribution += to_call
 			Action.RAISE:
-				var raise_amount: int = max(int(action.get("amount", min_raise)), min_raise)
+				var raise_amount: float = max(float(action.get("amount", min_raise)), min_raise)
 				var new_total := current_bet + raise_amount
 				var pay := new_total - already
 				street_bets[player] = new_total

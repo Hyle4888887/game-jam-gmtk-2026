@@ -11,13 +11,17 @@ config_version=5
 [application]
 
 config/name="Prison Poker"
-run/main_scene="res://sim/main.tscn"
+run/main_scene="res://view/game_view.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 
 [autoload]
 
 RNGService="*res://core/rng_service.gd"
 GameManager="*res://game/game_manager.gd"
+
+[display]
+
+window/size/mode=3
 
 [rendering]
 

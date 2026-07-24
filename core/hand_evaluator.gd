@@ -13,6 +13,22 @@ enum Category {
 	STRAIGHT_FLUSH,
 }
 
+const CATEGORY_DISPLAY_NAMES := {
+	Category.HIGH_CARD: "High Card",
+	Category.PAIR: "Pair",
+	Category.TWO_PAIR: "Two Pair",
+	Category.THREE_OF_A_KIND: "Three of a Kind",
+	Category.STRAIGHT: "Straight",
+	Category.FLUSH: "Flush",
+	Category.FULL_HOUSE: "Full House",
+	Category.FOUR_OF_A_KIND: "Four of a Kind",
+	Category.STRAIGHT_FLUSH: "Straight Flush",
+}
+
+
+static func category_display_name(category: int) -> String:
+	return CATEGORY_DISPLAY_NAMES.get(category, "Unknown")
+
 
 ## Result of evaluating a hand: category, tiebreaker ranks in the order they
 ## should be compared (most significant first), and the specific 5 cards that

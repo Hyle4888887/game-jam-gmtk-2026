@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://w3dtw0qo40r1"]
+
+[ext_resource type="Script" path="res://sim/test_paced_action_source.gd" id="1"]
+
+[node name="TestPacedActionSource" type="Node"]
+script = ExtResource("1")

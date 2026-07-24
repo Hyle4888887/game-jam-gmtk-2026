@@ -21,11 +21,11 @@ static func evaluate(quest: Quest, prisoners: Array, stats: StatsTracker, exclud
 	if candidates.is_empty():
 		return null
 
-	var best_value: int = stats.metric(candidates[0].id, quest.metric_key)
+	var best_value: float = stats.metric(candidates[0].id, quest.metric_key)
 	var best_list: Array = [candidates[0]]
 	for i in range(1, candidates.size()):
 		var p = candidates[i]
-		var v: int = stats.metric(p.id, quest.metric_key)
+		var v: float = stats.metric(p.id, quest.metric_key)
 		var better: bool = v > best_value if quest.pick == Quest.Pick.MAX else v < best_value
 		if better:
 			best_value = v

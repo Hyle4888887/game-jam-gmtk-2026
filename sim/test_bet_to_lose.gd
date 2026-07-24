@@ -45,25 +45,25 @@ func _ready() -> void:
 	# per-hand that any winner's own delta this hand was negative.
 	var any_winner_decreased_this_hand := false
 	for h in range(30):
-		var before_total := 0
+		var before_total := 0.0
 		for p in prisoners:
 			before_total += p.sentence_years
-		var log := PokerEngine.play_hand(prisoners, blinds, rng, action_source, h % 7)
-		var after_total := 0
+		var log := await PokerEngine.play_hand(prisoners, blinds, rng, action_source, h % 7)
+		var after_total := 0.0
 		for p in prisoners:
 			after_total += p.sentence_years
-		var total_contrib := 0
-		var winners_contrib := 0
+		var total_contrib := 0.0
+		var winners_contrib := 0.0
 		for p in prisoners:
 			total_contrib += log.contributions[p]
 		for w in log.winners:
 			winners_contrib += log.contributions[w]
-			if int(log.sentence_deltas[w]) < 0:
+			if log.sentence_deltas[w] < 0:
 				any_winner_decreased_this_hand = true
 		var expected_delta := total_contrib - 2 * winners_contrib
-		if after_total - before_total != expected_delta:
+		if not is_equal_approx(after_total - before_total, expected_delta) and absf(after_total - before_total - expected_delta) > 0.000001:
 			formula_holds = false
-			print("  hand %d: expected delta %d, got %d" % [h, expected_delta, after_total - before_total])
+			print("  hand %d: expected delta %s, got %s" % [h, expected_delta, after_total - before_total])
 	_check(formula_holds, "table-wide sentence delta matches total_contrib - 2*winners_contrib every hand")
 	_check(any_winner_decreased_this_hand, "every hand's winner(s) had their own sentence decrease by their contribution")
 
@@ -76,7 +76,7 @@ func _ready() -> void:
 	var table: Array = [folder, caller] + others
 
 	var fold_source := _ScriptedFoldSource.new(folder.id)
-	var log_b := PokerEngine.play_hand(table, blinds, rng, fold_source, 0)
+	var log_b := await PokerEngine.play_hand(table, blinds, rng, fold_source, 0)
 
 	_check(folder.folded, "scripted prisoner actually folded")
 	_check(folder.sentence_years == 100 + log_b.contributions[folder], "folder's sentence increased by exactly their (small) contribution (blinds dict here has no loss_penalty_factor, so it defaults to 1.0/full penalty)")
@@ -93,16 +93,16 @@ func _ready() -> void:
 		soft_others.append(PrisonerState.new(i, "P%d" % i, 100, false))
 	var soft_table: Array = [soft_folder] + soft_others
 	var soft_fold_source := _ScriptedFoldSource.new(soft_folder.id)
-	var log_c := PokerEngine.play_hand(soft_table, soft_blinds, rng, soft_fold_source, 0)
+	var log_c := await PokerEngine.play_hand(soft_table, soft_blinds, rng, soft_fold_source, 0)
 
-	var expected_soft_delta: int = int(round(log_c.contributions[soft_folder] * 0.25))
+	var expected_soft_delta: float = log_c.contributions[soft_folder] * 0.25
 	_check(
-		log_c.sentence_deltas[soft_folder] == expected_soft_delta,
+		is_equal_approx(log_c.sentence_deltas[soft_folder], expected_soft_delta) or log_c.sentence_deltas[soft_folder] == expected_soft_delta,
 		"loss_penalty_factor=0.25 scales a non-winner's penalty down to 25%% of their contribution (not the full amount)"
 	)
 	var any_full_winner_erase := false
 	for w in log_c.winners:
-		if int(log_c.sentence_deltas[w]) == -int(log_c.contributions[w]):
+		if log_c.sentence_deltas[w] == -log_c.contributions[w]:
 			any_full_winner_erase = true
 	_check(any_full_winner_erase, "loss_penalty_factor does not affect the winner's own full erase")
 
@@ -121,7 +121,7 @@ class _ScriptedFoldSource:
 	func _init(p_fold_id: int) -> void:
 		fold_id = p_fold_id
 
-	func decide(prisoner, legal_actions: Array, _to_call: int, _min_raise: int, _context: Dictionary = {}) -> Dictionary:
+	func decide(prisoner, legal_actions: Array, _to_call: float, _min_raise: float, _context: Dictionary = {}) -> Dictionary:
 		if prisoner.id == fold_id and BettingRound.Action.FOLD in legal_actions:
 			return {"type": BettingRound.Action.FOLD}
 		if BettingRound.Action.CHECK in legal_actions:
