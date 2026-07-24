@@ -1,0 +1,80 @@
+[gd_scene format=3 uid="uid://vwuretlak1q4"]
+
+[ext_resource type="Script" uid="uid://c1e2iyh8d3vco" path="res://menu/menu_principal.gd" id="1_bj1uy"]
+
+[sub_resource type="Gradient" id="Gradient_x7udj"]
+offsets = PackedFloat32Array(0.20432693, 1)
+colors = PackedColorArray(0.18431373, 0, 0, 1, 0.2901961, 0.050980393, 0.078431375, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_mycqx"]
+gradient = SubResource("Gradient_x7udj")
+fill_from = Vector2(0, 0.9878472)
+fill_to = Vector2(0.484375, 0.49479166)
+repeat = 2
+
+[sub_resource type="LabelSettings" id="LabelSettings_gd2gm"]
+font_size = 50
+
+[node name="Menu principal" type="Control" unique_id=532813813]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_bj1uy")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1178282701]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("GradientTexture2D_mycqx")
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="." unique_id=1998187188]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -145.0
+offset_top = 189.0
+offset_right = 145.0
+offset_bottom = 244.0
+grow_horizontal = 2
+
+[node name="Label" type="Label" parent="VBoxContainer2" unique_id=1352167451]
+layout_mode = 2
+text = "Menu Principal"
+label_settings = SubResource("LabelSettings_gd2gm")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1001877064]
+propagate_maximum_size = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -70.75
+offset_top = -47.875
+offset_right = 70.75
+offset_bottom = 47.875
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="StartButton" type="Button" parent="VBoxContainer" unique_id=1328696047]
+layout_mode = 2
+theme_override_font_sizes/font_size = 25
+text = "Start"
+
+[node name="QuitButton" type="Button" parent="VBoxContainer" unique_id=1334576369]
+layout_mode = 2
+theme_override_font_sizes/font_size = 25
+text = "Quit"
+
+[connection signal="button_down" from="VBoxContainer/StartButton" to="." method="_on_start_button_down"]
+[connection signal="button_down" from="VBoxContainer/QuitButton" to="." method="_on_quit_button_down"]
