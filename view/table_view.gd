@@ -2,10 +2,10 @@ class_name TableView
 extends Control
 
 ## The poker table: 7 seats arranged in an ellipse, a community-card row in
-## the middle, and a top info label (day/quest/hand). Background is a plain
-## placeholder color for now - table.png/Wall.png were removed from the art
-## pack and not yet replaced (see 2026-07-24 asset survey); swap `background`
-## for a TextureRect the moment real art lands, no layout changes needed.
+## the middle, and a top info label (day/quest/hand). asset/other_pics/
+## Background.jpg fills the whole screen behind everything - there's no
+## separate table shape drawn on top of it, since the image already depicts
+## the table itself.
 ##
 ## Built in code rather than a hand-authored .tscn - simpler to keep correct
 ## while the layout is still in flux.
@@ -13,10 +13,9 @@ extends Control
 const SEAT_SCENE := preload("res://view/seat_view.tscn")
 const CARD_VIEW_SCENE := preload("res://view/card_view.tscn")
 const CHIP_STACK_SCENE := preload("res://view/chip_stack_view.tscn")
+const BACKGROUND_TEXTURE := preload("res://asset/other_pics/Background.jpg")
 const NUM_SEATS := 7
 const SEAT_SIZE := Vector2(120, 110)
-const FELT_COLOR := Color(0.06, 0.32, 0.14)
-const ROOM_COLOR := Color(0.05, 0.05, 0.06)
 const CARD_SIZE := Vector2(50, 72)
 const CARD_SEPARATION := 8.0
 
@@ -26,8 +25,7 @@ var community_row: Control
 var info_label: Label
 var pot_label: Label
 var pot_chips: ChipStackView
-var room_background: ColorRect
-var table_surface: Panel
+var room_background: TextureRect
 # Cached by set_pot() every time it's called - lets animate_chip_slide look
 # up "the pot as it stood right before this bet" without game_view having
 # to separately track and pass that number through.
@@ -37,24 +35,14 @@ var _last_pot_amount: float = 0.0
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 
-	room_background = ColorRect.new()
-	room_background.color = ROOM_COLOR
+	room_background = TextureRect.new()
+	room_background.texture = BACKGROUND_TEXTURE
 	room_background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	room_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	room_background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	room_background.clip_contents = true
 	room_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(room_background)
-
-	# The actual table surface: a rounded felt panel distinct from the room
-	# background around it, so this reads as "a table" rather than just a
-	# flat color fill. Sized/positioned in _layout_seats alongside the seats
-	# since both depend on the same viewport size. Swap for a TextureRect
-	# the moment table.png/Wall.png art is replaced - no layout changes
-	# needed elsewhere.
-	table_surface = Panel.new()
-	var table_style := StyleBoxFlat.new()
-	table_style.bg_color = FELT_COLOR
-	table_surface.add_theme_stylebox_override("panel", table_style)
-	table_surface.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(table_surface)
 
 	info_label = Label.new()
 	info_label.position = Vector2(20, 10)
@@ -113,20 +101,19 @@ func _layout_seats() -> void:
 		vp = Vector2(1152, 648)
 	var center := vp / 2.0
 	var radius := Vector2(vp.x * 0.36, vp.y * 0.34)
+
+	# Anchors (PRESET_FULL_RECT, set in _ready) should keep this filling the
+	# screen on their own, but explicit sizing here matches the same
+	# belt-and-suspenders approach used for seats below (see the Wayland
+	# note on the process_frame connection) - cheap insurance against the
+	# background silently staying at its pre-layout 0x0 size.
+	room_background.size = vp
+	room_background.position = Vector2.ZERO
+
 	for i in range(NUM_SEATS):
 		var theta := PI / 2.0 + i * TAU / float(NUM_SEATS)
 		var point := center + Vector2(cos(theta), sin(theta)) * radius
 		seats[i].position = point - SEAT_SIZE / 2.0
-
-	var table_size := Vector2(vp.x * 0.6, vp.y * 0.5)
-	table_surface.size = table_size
-	table_surface.position = center - table_size / 2.0
-	var style: StyleBoxFlat = table_surface.get_theme_stylebox("panel")
-	var corner: int = int(table_size.y / 2.0)
-	style.corner_radius_top_left = corner
-	style.corner_radius_top_right = corner
-	style.corner_radius_bottom_left = corner
-	style.corner_radius_bottom_right = corner
 
 	var row_width: float = 5 * CARD_SIZE.x + 4 * CARD_SEPARATION
 	community_row.position = Vector2(center.x - row_width / 2.0, center.y - CARD_SIZE.y / 2.0)

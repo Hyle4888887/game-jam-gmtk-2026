@@ -13,6 +13,12 @@ const TRACKS := {
 	"game_over": "res://musics/MusicGameOver.mp3",
 }
 
+# -12dB reads as roughly "half as loud" to the ear (perceived loudness is
+# not linear with dB) - background music competing with card/chip SFX at
+# full volume was drowning them out. Tune this single constant if it still
+# feels off rather than hunting through play()/stop().
+const DEFAULT_VOLUME_DB := -12.0
+
 var _player: AudioStreamPlayer
 var _current_track: String = ""
 var _fade_tween: Tween
@@ -58,9 +64,9 @@ func play(track_name: String, fade_in: float = 1.0) -> void:
 	if fade_in > 0.0:
 		_player.volume_db = -40.0
 		_fade_tween = create_tween()
-		_fade_tween.tween_property(_player, "volume_db", 0.0, fade_in)
+		_fade_tween.tween_property(_player, "volume_db", DEFAULT_VOLUME_DB, fade_in)
 	else:
-		_player.volume_db = 0.0
+		_player.volume_db = DEFAULT_VOLUME_DB
 
 
 func play_in_game(fade_in: float = 1.5) -> void:
