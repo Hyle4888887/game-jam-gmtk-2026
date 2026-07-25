@@ -1,0 +1,75 @@
+[gd_scene format=3 uid="uid://vwuretlak1q4"]
+
+[ext_resource type="Script" uid="uid://c1e2iyh8d3vco" path="res://menus/menu_principal.gd" id="1_bj1uy"]
+[ext_resource type="Texture2D" uid="uid://dhglmbjexh1ub" path="res://asset/other_pics/prison.jpg" id="2_ugtwm"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_gd2gm"]
+font_size = 50
+
+[node name="Menu principal" type="Control" unique_id=532813813]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_bj1uy")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1178282701]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_ugtwm")
+expand_mode = 3
+
+[node name="Titre" type="VBoxContainer" parent="." unique_id=1998187188]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -181.0
+offset_top = -34.5
+offset_right = 181.0
+offset_bottom = 34.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Titre" type="Label" parent="Titre" unique_id=1352167451]
+layout_mode = 2
+text = "142 YEARS TO GET TO YOU"
+label_settings = SubResource("LabelSettings_gd2gm")
+
+[node name="lesButtons" type="VBoxContainer" parent="." unique_id=1001877064]
+propagate_maximum_size = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -71.0
+offset_top = 114.0
+offset_right = 70.5
+offset_bottom = 216.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="StartButton" type="Button" parent="lesButtons" unique_id=1328696047]
+layout_mode = 2
+theme_override_font_sizes/font_size = 25
+text = "Start"
+
+[node name="QuitButton" type="Button" parent="lesButtons" unique_id=1334576369]
+layout_mode = 2
+theme_override_font_sizes/font_size = 25
+text = "Quit"
+
+[connection signal="button_down" from="lesButtons/StartButton" to="." method="_on_start_button_down"]
+[connection signal="button_down" from="lesButtons/QuitButton" to="." method="_on_quit_button_down"]
