@@ -1,6 +1,5 @@
 extends Control
-@onready var first_scene = load(res:://) #il faut le path de la scéne du début
-
+@onready var first_scene = load("res://view/game_view.tscn") 
 #serve a rien mais au cas ou
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
