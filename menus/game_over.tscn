@@ -1,14 +1,7 @@
 [gd_scene format=3 uid="uid://dr6odrrhpx186"]
 
 [ext_resource type="Script" uid="uid://ctgrqo1d2aaam" path="res://menus/game_over.gd" id="1_y26ei"]
-
-[sub_resource type="Gradient" id="Gradient_xapjj"]
-offsets = PackedFloat32Array(0.23798077, 1)
-colors = PackedColorArray(0.3464297, 0.50778097, 0.70597076, 1, 0.53686196, 0.98751837, 0.8976674, 1)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_mycqx"]
-gradient = SubResource("Gradient_xapjj")
-fill_to = Vector2(0.8107639, 0.828125)
+[ext_resource type="Texture2D" uid="uid://o2u805hayidx" path="res://asset/other_pics/GameOver.png" id="2_mq8lb"]
 
 [node name="GameOver" type="Control" unique_id=926093529]
 layout_mode = 3
@@ -26,7 +19,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = SubResource("GradientTexture2D_mycqx")
+texture = ExtResource("2_mq8lb")
 
 [node name="Titles" type="VBoxContainer" parent="." unique_id=2011798692]
 layout_mode = 1
@@ -43,6 +36,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Game over" type="Label" parent="Titles" unique_id=1025775282]
+modulate = Color(0.012617188, 0.012617188, 0.012617188, 1)
 layout_mode = 2
 theme_override_font_sizes/font_size = 70
 text = "GAME OVER"
