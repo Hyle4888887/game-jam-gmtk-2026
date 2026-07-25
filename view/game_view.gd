@@ -101,6 +101,7 @@ func _ready() -> void:
 	var config := RunConfig.new()
 	var paced_ai := PacedActionSource.new(AIController.new(), ai_turn_delay_seconds)
 	var action_source := MixedActionSource.new(HumanActionSource.new(hud_view), paced_ai)
+	MusicManager.play_in_game()
 	await GameManager.start_run(config, action_source)
 
 
@@ -137,6 +138,7 @@ func _on_hand_started(_dealer_seat: int) -> void:
 	table_view.clear_all_action_text()
 	win_banner_label.visible = false
 	_refresh_seats()
+	SoundManager.play_card()
 
 
 func _on_action_taken(prisoner_id: int, action: Dictionary) -> void:

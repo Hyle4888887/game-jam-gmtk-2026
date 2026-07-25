@@ -28,6 +28,10 @@ var pot_label: Label
 var pot_chips: ChipStackView
 var room_background: ColorRect
 var table_surface: Panel
+# Cached by set_pot() every time it's called - lets animate_chip_slide look
+# up "the pot as it stood right before this bet" without game_view having
+# to separately track and pass that number through.
+var _last_pot_amount: float = 0.0
 
 
 func _ready() -> void:
@@ -166,7 +170,14 @@ func set_community(cards: Array) -> void:
 	for i in range(community_cards.size()):
 		var cv: CardView = community_cards[i]
 		if i < cards.size():
+			# Only the newly-revealed slots should make noise - set_community
+			# gets called again on later streets (turn/river) with the same
+			# flop cards still in `cards`, so without this guard every street
+			# would re-trigger the flip sound for cards already on the table.
+			var is_new_reveal: bool = cv.card == null
 			cv.set_card(cards[i], true)
+			if is_new_reveal:
+				SoundManager.play_card()
 		else:
 			cv.clear()
 
@@ -182,6 +193,7 @@ func set_info_text(text: String) -> void:
 func set_pot(amount: float) -> void:
 	pot_label.text = "Pot: %s" % TimeUnits.format_amount_best_unit(amount)
 	pot_chips.set_amount(amount)
+	_last_pot_amount = amount
 
 
 func set_seat_action_text(seat_index: int, text: String) -> void:
@@ -226,7 +238,8 @@ func animate_chip_slide(seat_index: int, amount: float) -> void:
 		return
 	var start_center: Vector2 = seats[seat_index].position + SEAT_SIZE / 2.0
 	var end_center: Vector2 = pot_chips.position + pot_chips.custom_minimum_size / 2.0
-	_animate_flying_chip(start_center, end_center, amount, 0.45)
+	var sfx := SoundManager.sfx_for_bet(amount, _last_pot_amount)
+	_animate_flying_chip(start_center, end_center, amount, 0.45, sfx)
 
 
 ## Animates the pot's chips sliding to the winning seat at showdown, then
@@ -237,10 +250,10 @@ func animate_pot_to_seat(seat_index: int, amount: float) -> void:
 		return
 	var start_center: Vector2 = pot_chips.position + pot_chips.custom_minimum_size / 2.0
 	var end_center: Vector2 = seats[seat_index].position + SEAT_SIZE / 2.0
-	_animate_flying_chip(start_center, end_center, amount, 0.9)
+	_animate_flying_chip(start_center, end_center, amount, 0.9, "chip_tapis")
 
 
-func _animate_flying_chip(start_center: Vector2, end_center: Vector2, amount: float, duration: float) -> void:
+func _animate_flying_chip(start_center: Vector2, end_center: Vector2, amount: float, duration: float, landing_sfx: String) -> void:
 	var chip_size := ChipStackView.DISPLAY_SIZE
 	var chip := TextureRect.new()
 	chip.texture = ChipStackView.chip_texture(TimeUnits.best_unit_for(amount), false)
@@ -255,6 +268,11 @@ func _animate_flying_chip(start_center: Vector2, end_center: Vector2, amount: fl
 	var tween := create_tween()
 	tween.tween_property(chip, "position", end_center - Vector2(chip_size, chip_size) / 2.0, duration) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# Landing sound fires right as the chip actually reaches the pot/seat,
+	# not after queue_free - queueing free() doesn't delay a frame, but
+	# ordering the callback this way keeps the intent obvious if that ever
+	# changes (e.g. an impact "squash" animation added before removal).
+	tween.tween_callback(func(): SoundManager.play(landing_sfx, 0.04))
 	tween.tween_callback(chip.queue_free)
 
 

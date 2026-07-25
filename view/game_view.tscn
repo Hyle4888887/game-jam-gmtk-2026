@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://dm6mtg4wniima"]
 
-[ext_resource type="Script" path="res://view/game_view.gd" id="1"]
+[ext_resource type="Script" uid="uid://bcu75vn5jij50" path="res://view/game_view.gd" id="1"]
 
-[node name="GameView" type="Control"]
+[node name="GameView" type="Control" unique_id=1391094983]
+layout_mode = 3
+anchors_preset = 0
 script = ExtResource("1")

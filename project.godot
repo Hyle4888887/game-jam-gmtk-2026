@@ -18,6 +18,8 @@ config/features=PackedStringArray("4.7", "Forward Plus")
 
 RNGService="*res://core/rng_service.gd"
 GameManager="*res://game/game_manager.gd"
+SoundManager="*uid://bi58yr2vehhkx"
+MusicManager="*uid://dndbmmosx08bf"
 
 [display]
 
