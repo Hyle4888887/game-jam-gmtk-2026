@@ -24,6 +24,15 @@ signal action_taken(prisoner_id: int, action: Dictionary)
 signal sentence_changed(prisoner_id: int, old_value: float, new_value: float)
 signal prisoner_died(prisoner_id: int, cause: String)
 
+## Emitted by GameView on any mouse/keyboard press (see GameView.
+## _unhandled_input). Two consumers race a wait against it: PacedActionSource
+## uses it to cut an AI turn's pacing delay short (so clicking through
+## actually speeds the game up, not just the end-of-hand pause below), and
+## start_run's wait_for_hand_result_ack uses it (with no timeout at all) to
+## know the player has actually seen the "WINNER IS ..." popup before
+## starting the next hand.
+signal skip_requested
+
 var player: PrisonerState = null
 var table: TableManager = null
 var config: RunConfig = null
@@ -40,8 +49,15 @@ var config: RunConfig = null
 ## PokerEngine.play_hand, which awaits decide() calls) so a human-driven seat
 ## can genuinely wait on a button press; callers must `await` this function.
 ## Returns {"win": bool, "reason": String, "day_reached": int,
-## "final_sentence": int}.
-func start_run(run_config: RunConfig, action_source = null, player_name: String = "Player") -> Dictionary:
+## "final_sentence": int}. `wait_for_hand_result_ack` (false by default)
+## blocks the day loop after each hand resolves until GameView's
+## skip_requested fires (any mouse/keyboard press) - no timeout, so the
+## "WINNER IS ..." popup (see HandResultPopup) genuinely stays up until the
+## player has actually seen it, instead of a fixed pause that could
+## auto-advance (and start the next hand's own AI turns) out from under
+## them. False for the M7 balance harness and automated tests, which need
+## hundreds/thousands of hands to run unattended in seconds.
+func start_run(run_config: RunConfig, action_source = null, player_name: String = "Player", wait_for_hand_result_ack: bool = false) -> Dictionary:
 	config = run_config
 	if config.quest_pool.is_empty():
 		config.quest_pool = Quest.default_pool()
@@ -83,6 +99,8 @@ func start_run(run_config: RunConfig, action_source = null, player_name: String 
 			var log := await PokerEngine.play_hand(table.seats, blinds, RNGService, action_source, table.dealer_index)
 			stats.record_hand(log, table.seats)
 			table.rotate_dealer()
+			if wait_for_hand_result_ack:
+				await skip_requested
 
 		var victims: Array = DeathResolver.resolve(table.seats, quest, stats, RNGService)
 		day_resolved.emit(day, victims)

@@ -1,43 +1,27 @@
 class_name TickingSentenceLabel
 extends Label
 
-## Shows "X years (Y sec)". The years number is the authoritative value
+## Shows "X years (Y [unit])". The years number is the authoritative value
 ## (sentence_years, per graphify/Design - Rules.md §1) and only actually
-## changes via set_years() (i.e. when a hand resolves) - the seconds
-## parenthetical visually ticks down continuously between updates for a
-## countdown-clock feel, purely cosmetic, and resyncs to the true
-## years-derived value on every set_years() call so it never really drifts.
-
-const TICK_RATE := 30.0
+## changes via set_years() (i.e. when a hand resolves). The parenthetical
+## shows the REAL sub-year remainder in whichever unit best fits it (see
+## TimeUnits.format_amount_best_unit) - early-game blinds are minutes/hours,
+## far smaller than a whole year, so a change that only ever showed in the
+## truncated "%d years" digit looked like betting/raising did nothing even
+## though sentence_years genuinely moved every hand. This used to be a
+## purely cosmetic ticking-down clock instead of the real remainder, which
+## was itself part of that confusion (a fake number moving while the real
+## one visibly didn't).
 
 var _years: float = 0.0
-var _display_seconds: float = 0.0
 
 
 func set_years(years: float) -> void:
 	_years = maxf(years, 0.0)
-	_display_seconds = TimeUnits.years_to_seconds(_years)
-	_update_text()
-
-
-func _process(delta: float) -> void:
-	if _display_seconds <= 0.0:
-		return
-	_display_seconds = max(_display_seconds - delta * TICK_RATE, 0.0)
 	_update_text()
 
 
 func _update_text() -> void:
-	text = "%d years (%s sec)" % [int(_years), _format_with_commas(int(_display_seconds))]
-
-
-static func _format_with_commas(n: int) -> String:
-	var s := str(n)
-	var result := ""
-	var count := 0
-	for i in range(s.length() - 1, -1, -1):
-		result = s[i] + result
-		count += 1
-		if count % 3 == 0 and i != 0:
-			result = "," + result
-	return result
+	var whole_years := int(_years)
+	var remainder: float = _years - float(whole_years)
+	text = "%d years (%s)" % [whole_years, TimeUnits.format_amount_best_unit(remainder)]

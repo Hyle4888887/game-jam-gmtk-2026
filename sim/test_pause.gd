@@ -30,7 +30,15 @@ func _ready() -> void:
 
 	panel._layout()
 	var vp := panel.get_viewport_rect().size
-	_check(panel._panel.size.x >= vp.x * 0.6 and panel._panel.size.y >= vp.y * 0.7, "panel sizes as a real fraction of the viewport, not a tiny fixed box")
+	# Mirrors _layout()'s own clamped formula rather than a raw "fraction of
+	# vp" check - headless's dummy window is a 64x64 square, and with the
+	# project's canvas_items/expand stretch config that distorts the visible
+	# rect to a non-16:9 shape (1152x1152, not the real 1152x648 design
+	# aspect), so a loose vp.y*0.7 bound doesn't hold under the height
+	# clamp's real max (760) on every environment. A real monitor's landscape
+	# aspect never hits this edge case.
+	var expected_panel_size := Vector2(clampf(vp.x * 0.7, 480, 900), clampf(vp.y * 0.8, 420, 760))
+	_check(panel._panel.size.is_equal_approx(expected_panel_size) and expected_panel_size.x > 400 and expected_panel_size.y > 300, "panel sizes as a real fraction of the viewport, not a tiny fixed box")
 	_check(panel._dim.color.a >= 0.8, "dim overlay is strongly opaque, not barely-there")
 
 	var rules_text := panel._build_rules_text()

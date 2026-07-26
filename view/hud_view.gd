@@ -23,6 +23,8 @@ var raise_amount_label: Label
 var quick_bet_buttons: Array = []
 var day_label: Label
 var sentence_label: TickingSentenceLabel
+var committed_label: Label
+var current_hand_label: Label
 
 var _current_to_call: float = 0.0
 var _current_pot: float = 0.0
@@ -54,13 +56,39 @@ func _ready() -> void:
 	day_label.add_theme_font_size_override("font_size", 14)
 	sentence_label = TickingSentenceLabel.new()
 	sentence_label.add_theme_font_size_override("font_size", 13)
+	# sentence_years only actually changes once a hand resolves (per
+	# graphify/Design - Rules.md §3, contribution isn't subtracted from it
+	# mid-hand) - without this, betting/calling/raising during a whole
+	# in-progress hand (which can take a while with AI turn pacing) looks
+	# like nothing is happening at all, since the settled-sentence readout
+	# above stays frozen the entire time. This gives immediate feedback that
+	# an action actually registered, even before the hand settles.
+	committed_label = Label.new()
+	committed_label.add_theme_font_size_override("font_size", 12)
 	info_vbox.add_child(day_label)
 	info_vbox.add_child(sentence_label)
+	info_vbox.add_child(committed_label)
 	hbox.add_child(info_vbox)
 
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.add_child(spacer)
+
+	# Live readout of the player's own best 5-card hand so far (blank
+	# preflop - HandEvaluator needs 5+ cards, and 2 hole cards alone aren't
+	# enough to mean anything - filled in from the flop onward). There was
+	# previously no in-game way to tell what hand you're actually holding
+	# without knowing poker hand rankings by heart.
+	current_hand_label = Label.new()
+	current_hand_label.add_theme_font_size_override("font_size", 15)
+	current_hand_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	current_hand_label.custom_minimum_size = Vector2(140, 0)
+	current_hand_label.visible = false
+	hbox.add_child(current_hand_label)
+
+	var spacer2 := Control.new()
+	spacer2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(spacer2)
 
 	var raise_vbox := VBoxContainer.new()
 	raise_amount_label = Label.new()
@@ -196,6 +224,24 @@ func hide_actions() -> void:
 	visible = false
 
 
-func set_status(day_text: String, sentence_years: float) -> void:
+func set_status(day_text: String, sentence_years: float, contribution: float = 0.0) -> void:
 	day_label.text = day_text
 	sentence_label.set_years(sentence_years)
+	if contribution > 0.0:
+		committed_label.text = "Committed this hand: %s" % TimeUnits.format_amount_best_unit(contribution)
+		committed_label.visible = true
+	else:
+		committed_label.visible = false
+
+
+## `category_text` is a HandEvaluator.category_display_name() result, e.g.
+## "Two Pair". See GameView - only called once there are 5+ cards to
+## evaluate (2 hole + 3+ community), since HandEvaluator.evaluate_best
+## requires at least 5.
+func set_current_hand(category_text: String) -> void:
+	current_hand_label.text = "Your hand: %s" % category_text
+	current_hand_label.visible = true
+
+
+func clear_current_hand() -> void:
+	current_hand_label.visible = false

@@ -16,13 +16,23 @@ extends Control
 ## catch bugs specific to this script (see sim/test_game_view_real.gd).
 @export var ai_turn_delay_seconds: float = 5.0
 
+## Same reasoning as ai_turn_delay_seconds (zeroed - here, falsed - out by
+## tests). When true, the day loop blocks after every hand until the player
+## presses any mouse/keyboard button (see _unhandled_input and
+## GameManager.start_run's wait_for_hand_result_ack) - no fixed timeout, so
+## the "WINNER IS ..." popup (see HandResultPopup) genuinely stays up until
+## it's actually been read, rather than auto-advancing into the next hand's
+## own AI turns out from under the player.
+@export var wait_for_hand_result_ack: bool = true
+
 var table_view: TableView
 var hud_view: HUDView
 var result_label: Label
-var win_banner_label: Label
+var hand_result_popup: HandResultPopup
 var rules_panel: RulesPanelView
 
 var _last_quest_name: String = ""
+var _current_community: Array[Card] = []
 
 
 func _ready() -> void:
@@ -49,13 +59,8 @@ func _ready() -> void:
 	result_label.visible = false
 	add_child(result_label)
 
-	win_banner_label = Label.new()
-	win_banner_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	win_banner_label.position.y = 40
-	win_banner_label.add_theme_font_size_override("font_size", 20)
-	win_banner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	win_banner_label.visible = false
-	add_child(win_banner_label)
+	hand_result_popup = preload("res://view/hand_result_popup.tscn").instantiate()
+	add_child(hand_result_popup)
 
 	# Added BEFORE the "?" button so the button renders on top and keeps
 	# receiving hover/click even once the panel is showing (it fully covers
@@ -102,12 +107,23 @@ func _ready() -> void:
 	var paced_ai := PacedActionSource.new(AIController.new(), ai_turn_delay_seconds)
 	var action_source := MixedActionSource.new(HumanActionSource.new(hud_view), paced_ai)
 	MusicManager.play_in_game()
-	await GameManager.start_run(config, action_source)
+	await GameManager.start_run(config, action_source, "Player", wait_for_hand_result_ack)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		_toggle_pause()
+		get_viewport().set_input_as_handled()
+		return
+	# Any mouse/keyboard press fast-forwards whatever's currently waiting on
+	# real time: an AI's PacedActionSource turn delay, or (with no timeout at
+	# all) the "WINNER IS ..." popup via wait_for_hand_result_ack. Not gated
+	# on the popup being visible - a click during an AI's own paced delay
+	# should speed that up too, not just the end-of-hand pause. Safe to fire
+	# unconditionally: this only reaches _unhandled_input for clicks/keys no
+	# Control (e.g. a HUD button) already consumed.
+	if (event is InputEventMouseButton or event is InputEventKey) and event.pressed:
+		GameManager.skip_requested.emit()
 		get_viewport().set_input_as_handled()
 
 
@@ -136,7 +152,9 @@ func _on_hand_started(_dealer_seat: int) -> void:
 	table_view.set_community([])
 	table_view.clear_highlights()
 	table_view.clear_all_action_text()
-	win_banner_label.visible = false
+	hand_result_popup.hide_result()
+	_current_community = []
+	hud_view.clear_current_hand()
 	_refresh_seats()
 	SoundManager.play_card()
 
@@ -194,6 +212,22 @@ func _on_action_requested(_prisoner_id: int, _legal_actions: Array) -> void:
 
 func _on_community_revealed(cards: Array) -> void:
 	table_view.set_community(cards)
+	_current_community.assign(cards)
+	_update_current_hand_display()
+
+
+## HandEvaluator.evaluate_best needs 5+ cards - 2 hole alone mean nothing, so
+## this only shows once the flop (3 community cards) is out.
+func _update_current_hand_display() -> void:
+	var player: PrisonerState = GameManager.player
+	if player == null or player.hole_cards.size() < 2 or _current_community.size() < 3:
+		hud_view.clear_current_hand()
+		return
+	var seven: Array[Card] = []
+	seven.append_array(player.hole_cards)
+	seven.append_array(_current_community)
+	var result := HandEvaluator.evaluate_best(seven)
+	hud_view.set_current_hand(HandEvaluator.category_display_name(result.category))
 
 
 func _on_hand_resolved(log) -> void:
@@ -206,17 +240,15 @@ func _on_hand_resolved(log) -> void:
 	var winner_names: Array = []
 	for w in log.winners:
 		winner_names.append(w.display_name)
-	var winner_text: String = ", ".join(winner_names)
 
 	if log.hand_result != null:
 		var category_text := HandEvaluator.category_display_name(log.hand_result.category)
-		win_banner_label.text = "%s won with %s!" % [winner_text, category_text]
+		hand_result_popup.show_result(winner_names, category_text)
 		table_view.highlight_winning_cards(log.hand_result.cards)
 	else:
 		# Win-by-everyone-else-folded: no showdown, nothing to highlight.
-		win_banner_label.text = "%s won (everyone else folded)!" % winner_text
+		hand_result_popup.show_result(winner_names, null)
 		table_view.clear_highlights()
-	win_banner_label.visible = true
 
 	# The pot's chips visibly travel to the winner(s) - split pots (a tie)
 	# send one to each winning seat. log.contributions is this hand's actual
@@ -253,5 +285,6 @@ func _refresh_seats(reveal_all: bool = false) -> void:
 
 	hud_view.set_status(
 		"Anti-quest: %s" % _last_quest_name,
-		GameManager.player.sentence_years
+		GameManager.player.sentence_years,
+		GameManager.player.contribution
 	)

@@ -59,6 +59,12 @@ func _ready() -> void:
 	add_child(community_row)
 	for i in range(5):
 		var cv: CardView = CARD_VIEW_SCENE.instantiate()
+		# Not inside a Container (see the comment above on why), so nothing else
+		# resizes this - explicitly matching CARD_SIZE here guards against the
+		# .tscn's own baked size (whatever a future edit sets it to) silently
+		# blowing the layout math above out of proportion again.
+		cv.custom_minimum_size = CARD_SIZE
+		cv.size = CARD_SIZE
 		cv.position = Vector2(i * (CARD_SIZE.x + CARD_SEPARATION), 0)
 		community_row.add_child(cv)
 		cv.clear()

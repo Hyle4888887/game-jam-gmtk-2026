@@ -82,6 +82,25 @@ func _ready() -> void:
 	hud.quick_bet_buttons[2].pressed.emit()  # POT (2), below min_raise (10)
 	_check(int(hud.raise_slider.value) == 10, "POT below min_raise clamps up to min_raise, not below the legal minimum")
 
+	# sentence_years only actually updates once a hand resolves (see
+	# ticking_sentence_label.gd) - this label gives feedback that an action
+	# registered even mid-hand, before the settled-sentence readout moves.
+	hud.set_status("Day 1", 142.0, 0.0)
+	_check(not hud.committed_label.visible, "no committed-this-hand label when contribution is 0 (nothing bet yet)")
+
+	hud.set_status("Day 1", 142.0, 5.0)
+	_check(hud.committed_label.visible, "committed-this-hand label shows once a bet has been made")
+	_check(hud.committed_label.text == "Committed this hand: %s" % TimeUnits.format_amount_best_unit(5.0), "committed label shows the contribution, best-unit formatted")
+
+	# Live best-hand readout: hidden until GameView has 5+ cards to evaluate
+	# (see GameView._update_current_hand_display), shown with the category
+	# name once it does.
+	_check(not hud.current_hand_label.visible, "current-hand label starts hidden (nothing to evaluate preflop)")
+	hud.set_current_hand("Two Pair")
+	_check(hud.current_hand_label.visible and hud.current_hand_label.text == "Your hand: Two Pair", "set_current_hand shows the category name")
+	hud.clear_current_hand()
+	_check(not hud.current_hand_label.visible, "clear_current_hand hides it again")
+
 	if failures > 0:
 		print("FAILED: %d assertion(s) failed" % failures)
 		get_tree().quit(1)

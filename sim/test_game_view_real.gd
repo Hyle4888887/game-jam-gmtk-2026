@@ -2,8 +2,10 @@ extends Node
 
 # Genuine end-to-end test: instantiates the REAL res://view/game_view.tscn
 # (not a hand-rebuilt pipeline) and drives it via its actual HUD buttons,
-# with ai_turn_delay_seconds zeroed out so it runs fast instead of the real
-# game's 5s-per-AI-turn pacing.
+# with ai_turn_delay_seconds zeroed and wait_for_hand_result_ack falsed out
+# so it runs unattended instead of the real game's 5s-per-AI-turn pacing plus
+# blocking after every hand for a click/keypress to dismiss the "WINNER IS
+# ..." popup.
 #
 # This exists because two real bugs (a missing return-type annotation in
 # game_view.gd, and a card-highlight-then-refresh ordering bug that silently
@@ -56,6 +58,7 @@ func _on_hand_resolved(_log) -> void:
 func _ready() -> void:
 	gv = load("res://view/game_view.tscn").instantiate()
 	gv.ai_turn_delay_seconds = 0.0
+	gv.wait_for_hand_result_ack = false
 	add_child(gv)
 
 	GameManager.action_requested.connect(_on_action_requested)

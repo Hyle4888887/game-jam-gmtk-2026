@@ -47,6 +47,10 @@ func _ready() -> void:
 	vbox.add_child(cards_row)
 	for i in range(2):
 		var cv: CardView = CARD_VIEW_SCENE.instantiate()
+		# Inside an HBoxContainer, so custom_minimum_size alone drives layout -
+		# set explicitly (matching TableView's own CARD_SIZE) so this doesn't
+		# silently balloon again if the .tscn's baked size ever changes.
+		cv.custom_minimum_size = TableView.CARD_SIZE
 		cards_row.add_child(cv)
 		hole_cards.append(cv)
 

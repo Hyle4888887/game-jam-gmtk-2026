@@ -1,9 +1,9 @@
 extends Node
 
-# Headless check for TickingSentenceLabel: set_years() resyncs the text
-# immediately, and the seconds parenthetical actually ticks down over time
-# (purely cosmetic - the years number itself never changes except via a
-# fresh set_years() call). Run via:
+# Headless check for TickingSentenceLabel: set_years() shows the whole-years
+# count immediately, plus the REAL sub-year remainder (in whichever unit
+# best fits it) so a change too small to move the whole-years digit is still
+# visible. Run via:
 #   godot --headless --path . res://sim/test_ticking_sentence_label.tscn
 
 var failures := 0
@@ -23,17 +23,20 @@ func _ready() -> void:
 
 	label.set_years(10)
 	_check(label.text.begins_with("10 years"), "set_years() shows the years number immediately")
-	_check(label.text.find("(") != -1 and label.text.find("sec)") != -1, "text includes a seconds-equivalent parenthetical")
+	_check(label.text == "10 years (0 sec)", "a clean whole-year value shows a zero remainder")
 
-	var seconds_before := label._display_seconds
-	# Simulate real time passing without waiting for real wall-clock time.
-	label._process(1.0)
-	_check(label._display_seconds < seconds_before, "the seconds readout ticks down over (simulated) time")
-	_check(label.text.begins_with("10 years"), "the years number itself does not change from ticking alone")
+	# A sub-year delta (e.g. a day-1 blind of a few minutes) doesn't move the
+	# whole-years digit, but must still show up in the remainder - this is
+	# the actual bug that motivated ditching the old cosmetic ticker: with a
+	# plain "%d years" readout, a real change this small looked like nothing
+	# happened at all.
+	label.set_years(9.5)
+	_check(label.text.begins_with("9 years"), "a sub-year change still floors to the correct whole-years digit")
+	_check(label.text.find("6 mo") != -1, "the sub-year remainder shows in its own best-fit unit (6 months)")
 
 	label.set_years(-5)
 	_check(label.text.begins_with("0 years"), "set_years() clamps a negative sentence to 0 for display")
-	_check(label._display_seconds == 0.0, "a clamped-to-0 sentence resyncs the ticking seconds to 0 too")
+	_check(label.text == "0 years (0 sec)", "a clamped-to-0 sentence shows a zero remainder too")
 
 	if failures > 0:
 		print("FAILED: %d assertion(s) failed" % failures)

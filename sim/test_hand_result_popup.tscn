@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://c1v3n0k8y5wgh"]
+
+[ext_resource type="Script" path="res://sim/test_hand_result_popup.gd" id="1"]
+
+[node name="TestHandResultPopup" type="Node"]
+script = ExtResource("1")

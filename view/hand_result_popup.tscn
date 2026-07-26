@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cq7hwj8tdrpv1"]
+
+[ext_resource type="Script" path="res://view/hand_result_popup.gd" id="1"]
+
+[node name="HandResultPopup" type="Control"]
+script = ExtResource("1")
